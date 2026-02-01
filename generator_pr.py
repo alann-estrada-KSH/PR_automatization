@@ -2,6 +2,7 @@ import subprocess
 import re
 import os
 import sys
+import argparse
 import pyperclip
 from tqdm import tqdm
 from datetime import datetime
@@ -161,6 +162,41 @@ def get_tasks_input():
         return [input(f" Tarea {i+1}: ") for i in range(int(num))]
     except: return []
 
+
+def get_multiline_input(prompt_msg="Introduce texto multilinea"):
+    print(f"{prompt_msg} (termina con una línea que contenga solo 'END'):")
+    lines = []
+    while True:
+        try:
+            line = input()
+        except EOFError:
+            break
+        if line.strip() == 'END':
+            break
+        lines.append(line)
+    return "\n".join(lines).strip()
+
+
+def read_notes_from_file(path):
+    try:
+        with open(path, 'r', encoding='utf-8') as fh:
+            return fh.read().strip()
+    except Exception as e:
+        print(f"⚠️ No se pudo leer el archivo de notas: {e}")
+        return ""
+
+
+def collect_additional_notes(args):
+    # Prioridad: --notes > --notes-file > --interactive-notes
+    notes = ""
+    if getattr(args, 'notes', None):
+        notes = args.notes.strip()
+    elif getattr(args, 'notes_file', None):
+        notes = read_notes_from_file(args.notes_file)
+    elif getattr(args, 'interactive_notes', False):
+        notes = get_multiline_input("Escribe instrucciones adicionales")
+    return notes
+
 # --- PROMPT ACTUALIZADO ---
 
 def build_prompt(logs, stats, project_type, branch_name):
@@ -206,11 +242,20 @@ def run_ollama(prompt):
 # --- MAIN ---
 
 def main():
-    num_commits = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+    parser = argparse.ArgumentParser(description="Generador de PR técnico con opciones de notas adicionales")
+    parser.add_argument('num_commits', nargs='?', type=int, default=1, help='Número de commits a incluir en el análisis')
+    parser.add_argument('--notes', '-n', help='Instrucciones adicionales (texto en línea)')
+    parser.add_argument('--notes-file', '-f', dest='notes_file', help='Leer instrucciones desde archivo')
+    parser.add_argument('--interactive-notes', '-i', action='store_true', help="Ingresar notas multilinea (terminar con 'END')")
+    parser.add_argument('--no-clipboard', action='store_true', help='No copiar el PR generado al portapapeles')
+    args = parser.parse_args()
+
+    num_commits = args.num_commits
     project_type = detect_project_type()
     print(f"\n 🔎 Proyecto detectado: \033[1m{project_type.upper()}\033[0m")
     
     tasks = get_tasks_input()
+    additional_notes = collect_additional_notes(args)
     
     with tqdm(total=100, desc="Generando PR", ncols=100) as pbar:
         logs, stats = get_git_info(num_commits)
@@ -246,6 +291,14 @@ def main():
             else:
                 content_fixed += f"\n\n{task_section}"
 
+        # Notas / Instrucciones adicionales
+        if additional_notes:
+            notes_section = "## 📝 Instrucciones adicionales\n" + additional_notes
+            if "## ⚠️ Consideraciones adicionales" in content_fixed:
+                content_fixed = content_fixed.replace("## ⚠️ Consideraciones adicionales", f"{notes_section}\n\n## ⚠️ Consideraciones adicionales")
+            else:
+                content_fixed += f"\n\n{notes_section}"
+
         # Checklist Técnico (El de "Cambios Realizados")
         final_pr = content_fixed.strip()
         final_pr += "\n\n## 🛠️ Cambios realizados\n"
@@ -267,8 +320,11 @@ def main():
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(final_pr)
         
-    try: pyperclip.copy(final_pr)
-    except: pass
+    if not getattr(args, 'no_clipboard', False):
+        try:
+            pyperclip.copy(final_pr)
+        except Exception:
+            pass
     
     print(f"\n ✅ PR generado en: {file_path}")
 
