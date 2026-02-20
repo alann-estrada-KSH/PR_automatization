@@ -8,6 +8,8 @@
 
 ## Quick Start
 
+Se recomienda tener instalado go previamente para evitar problemas, lo puedes descargar desde la pagina oficial [GoLang](https://go.dev/dl/)
+
 ```bash
 # 1. Clone
 git clone https://github.com/alann-estrada-KSH/ai-pr-generator/
@@ -25,15 +27,15 @@ prgen                            # genera PR del último commit
 
 ## Comandos
 
-| Comando | Descripción |
-|---|---|
-| `prgen generate` | Genera descripción de PR desde commits recientes |
-| `prgen commit` | Genera mensaje de commit Conventional Commits desde staged changes |
-| `prgen review` | Revisión de código por IA (bugs, seguridad, refactor) |
-| `prgen branch <desc>` | Sugiere nombres de rama desde una descripción |
-| `prgen version` | Muestra versión instalada |
-| `prgen update` | Actualiza desde git (con confirmación) |
-| `prgen config` | Muestra configuración activa |
+| Comando                 | Descripción                                                       |
+| ----------------------- | ------------------------------------------------------------------ |
+| `prgen generate`      | Genera descripción de PR desde commits recientes                  |
+| `prgen commit`        | Genera mensaje de commit Conventional Commits desde staged changes |
+| `prgen review`        | Revisión de código por IA (bugs, seguridad, refactor)            |
+| `prgen branch <desc>` | Sugiere nombres de rama desde una descripción                     |
+| `prgen version`       | Muestra versión instalada                                         |
+| `prgen update`        | Actualiza desde git (con confirmación)                            |
+| `prgen config`        | Muestra configuración activa                                      |
 
 ---
 
@@ -51,21 +53,21 @@ prgen generate --provider groq --model llama-3.1-70b-versatile
 
 **Flags:**
 
-| Flag | Corto | Descripción |
-|---|---|---|
-| `--commits` | `-c` | Commits a analizar (default: 1) |
-| `--from` | | Rama/ref base para comparar |
-| `--to` | | Rama/ref destino (default: HEAD) |
-| `--tasks` | `-t` | Task IDs separados por coma |
-| `--notes` | `-n` | Instrucciones adicionales inline |
-| `--notes-file` | `-f` | Instrucciones desde archivo |
+| Flag                    | Corto  | Descripción                           |
+| ----------------------- | ------ | -------------------------------------- |
+| `--commits`           | `-c` | Commits a analizar (default: 1)        |
+| `--from`              |        | Rama/ref base para comparar            |
+| `--to`                |        | Rama/ref destino (default: HEAD)       |
+| `--tasks`             | `-t` | Task IDs separados por coma            |
+| `--notes`             | `-n` | Instrucciones adicionales inline       |
+| `--notes-file`        | `-f` | Instrucciones desde archivo            |
 | `--interactive-notes` | `-i` | Notas multilinea (termina con `END`) |
-| `--provider` | `-p` | Override del proveedor LLM |
-| `--model` | `-m` | Override del modelo |
-| `--no-clipboard` | | No copiar al portapapeles |
-| `--dry-run` | | Salta la llamada al LLM |
-| `--dump-prompt` | | Imprime el prompt y sale |
-| `--debug` | | Modo debug |
+| `--provider`          | `-p` | Override del proveedor LLM             |
+| `--model`             | `-m` | Override del modelo                    |
+| `--no-clipboard`      |        | No copiar al portapapeles              |
+| `--dry-run`           |        | Salta la llamada al LLM                |
+| `--dump-prompt`       |        | Imprime el prompt y sale               |
+| `--debug`             |        | Modo debug                             |
 
 ---
 
@@ -80,6 +82,7 @@ prgen commit --apply   # genera y ejecuta el git commit directamente
 ```
 
 **Ejemplo de salida:**
+
 ```
 feat(auth): implementar rotación de refresh tokens en TokenService
 
@@ -101,6 +104,7 @@ prgen review --from develop       # todo lo diferente de develop
 ```
 
 **Reporte incluye:**
+
 - 🔴 Crítico | 🟡 Advertencia | 🟢 Sugerencia
 - Bugs y casos no manejados
 - Seguridad (SQL injection, secrets, auth)
@@ -160,12 +164,12 @@ diff:
 
 **Variables de entorno:**
 
-| Variable | Descripción |
-|---|---|
-| `PRGEN_PROVIDER` | `ollama` \| `openai` \| `groq` \| `openrouter` |
-| `PRGEN_MODEL` | Nombre del modelo |
-| `PRGEN_API_KEY` | API key (también acepta `GROQ_API_KEY`, `OPENAI_API_KEY`) |
-| `PRGEN_OLLAMA_URL` | URL de Ollama (default: `http://localhost:11434`) |
+| Variable             | Descripción                                                   |
+| -------------------- | -------------------------------------------------------------- |
+| `PRGEN_PROVIDER`   | `ollama` \| `openai` \| `groq` \| `openrouter`         |
+| `PRGEN_MODEL`      | Nombre del modelo                                              |
+| `PRGEN_API_KEY`    | API key (también acepta `GROQ_API_KEY`, `OPENAI_API_KEY`) |
+| `PRGEN_OLLAMA_URL` | URL de Ollama (default:`http://localhost:11434`)             |
 
 ### Usar Groq (recomendado para velocidad)
 
@@ -180,12 +184,12 @@ prgen
 
 ## Personalizar prompts
 
-| Archivo | Propósito |
-|---|---|
-| `prompts/base.md` | Estructura del PR — usa `{{.Branch}}`, `{{.Stats}}`, `{{.Logs}}`, `{{.Diff}}` |
-| `prompts/commit.md` | Guía para mensajes de commit CDE |
-| `prompts/review.md` | Estructura del reporte de revisión |
-| `~/.prgen/extra_prompt.md` | Instrucciones de tu equipo (no versionado) |
+| Archivo                      | Propósito                                                                             |
+| ---------------------------- | -------------------------------------------------------------------------------------- |
+| `prompts/base.md`          | Estructura del PR — usa `{{.Branch}}`, `{{.Stats}}`, `{{.Logs}}`, `{{.Diff}}` |
+| `prompts/commit.md`        | Guía para mensajes de commit CDE                                                      |
+| `prompts/review.md`        | Estructura del reporte de revisión                                                    |
+| `~/.prgen/extra_prompt.md` | Instrucciones de tu equipo (no versionado)                                             |
 
 ---
 
