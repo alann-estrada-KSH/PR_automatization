@@ -27,7 +27,6 @@ prompts:
   base: prompts/base.md
   review: prompts/review.md
   commit: prompts/commit.md
-  branch: prompts/branch.md
   # Optional extra prompt, merged after base (not committed to git)
   extra: ~/.prgen/extra_prompt.md
 

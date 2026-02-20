@@ -3,7 +3,7 @@ package checklist
 import (
 	"strings"
 
-	"github.com/ksh/prgen/internal/detect"
+	"github.com/alann-estrada-KSH/ai-pr-generator/internal/detect"
 )
 
 // ── Technical checklists ──────────────────────────────────────────────────────

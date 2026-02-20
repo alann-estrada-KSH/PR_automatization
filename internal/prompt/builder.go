@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ksh/prgen/internal/detect"
+	"github.com/alann-estrada-KSH/ai-pr-generator/internal/detect"
 )
 
 // Context holds all the data assembled before calling the LLM.

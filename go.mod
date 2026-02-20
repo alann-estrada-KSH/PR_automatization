@@ -1,4 +1,4 @@
-module github.com/ksh/prgen
+module github.com/alann-estrada-KSH/ai-pr-generator
 
 go 1.25.0
 
