@@ -8,15 +8,15 @@
 
 # ── LLM Provider ─────────────────────────────────────────────
 # Options: ollama | openai | groq | openrouter
-provider: ollama
-model: llama3.1
+provider: groq
+model: llama-3.3-70b-versatile
 
 # Ollama (local)
-ollama_url: http://localhost:11434
+# ollama_url: http://localhost:11434
 
 # API key — for cloud providers (Groq, OpenAI, OpenRouter)
 # Recommended: use env var instead of storing here
-# api_key: ""
+api_key: ""
 
 # API base URL — auto-set for known providers, override for custom
 # api_base_url: ""
@@ -25,6 +25,9 @@ ollama_url: http://localhost:11434
 prompts:
   # Base prompt (versioned with the tool — edit carefully)
   base: prompts/base.md
+  review: prompts/review.md
+  commit: prompts/commit.md
+  branch: prompts/branch.md
   # Optional extra prompt, merged after base (not committed to git)
   extra: ~/.prgen/extra_prompt.md
 
@@ -32,6 +35,19 @@ prompts:
 output:
   save_path: ~/KSH/Projects
   copy_to_clipboard: true
+
+# ── Diff Collection ──────────────────────────────────────────
+diff:
+  # Max characters to send to the LLM (default: 8000)
+  max_chars: 8000
+  # Files to ignore in the diff (git pathspec exclude syntax)
+  ignore:
+    - "package-lock.json"
+    - "composer.lock"
+    - "yarn.lock"
+    - "go.sum"
+    - "*.min.js"
+    - "*.min.css"
 
 # ── Debug ─────────────────────────────────────────────────────
 debug: false

@@ -299,7 +299,7 @@ PowerShell -ExecutionPolicy Bypass -File scripts\install.ps1     # Windows
 ### Prioridad (de menor a mayor)
 
 ```
-Defaults → config.yaml → ~/.prgen/config.yaml → Variables de entorno → Flags CLI
+Defaults → config.yaml → ~/.prgen/config.yaml → .env → Variables de entorno → Flags CLI
 ```
 
 ### Archivo `config.yaml`

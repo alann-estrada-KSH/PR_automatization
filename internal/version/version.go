@@ -3,8 +3,8 @@ package version
 import "fmt"
 
 // These are injected at build time via -ldflags:
-//   -X github.com/alann-estrada-KSH/ai-pr-generator/internal/version.Version=0.1.0
-//   -X github.com/alann-estrada-KSH/ai-pr-generator/internal/version.BuildDate=2026-02-19
+//   -X github.com/ksh/prgen/internal/version.Version=0.1.0
+//   -X github.com/ksh/prgen/internal/version.BuildDate=2026-02-19
 var (
 	Version   = "dev"
 	BuildDate = "unknown"

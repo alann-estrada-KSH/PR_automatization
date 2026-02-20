@@ -18,7 +18,7 @@ Write-Host "[prgen] Building v$Version ..." -ForegroundColor Cyan
 # Build
 Push-Location $RepoRoot
 try {
-    $ldflags = "-s -w -X github.com/alann-estrada-KSH/ai-pr-generator/internal/version.Version=$Version -X github.com/alann-estrada-KSH/ai-pr-generator/internal/version.BuildDate=$BuildDate"
+    $ldflags = "-s -w -X github.com/ksh/prgen/internal/version.Version=$Version -X github.com/ksh/prgen/internal/version.BuildDate=$BuildDate"
     go build -ldflags $ldflags -o $BinName ./cmd/prgen
     if ($LASTEXITCODE -ne 0) { throw "Build failed with exit code $LASTEXITCODE" }
     Write-Host "[prgen] Build OK" -ForegroundColor Green

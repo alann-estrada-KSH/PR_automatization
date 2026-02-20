@@ -70,9 +70,17 @@ func FilteredDiff(n int, ignorePatterns []string) string {
 }
 
 // StagedDiff returns the diff of currently staged (cached) changes.
-// This is what prgen commit uses to analyze what's about to be committed.
 func StagedDiff() string {
 	return MustRun("diff", "--cached")
+}
+
+// FilteredStagedDiff returns the staged diff excluding files that match any of the given patterns.
+func FilteredStagedDiff(ignorePatterns []string) string {
+	args := []string{"diff", "--cached", "--"}
+	for _, p := range ignorePatterns {
+		args = append(args, ":(exclude)"+p)
+	}
+	return MustRun(args...)
 }
 
 // StagedStat returns the --stat of currently staged changes.
@@ -81,9 +89,17 @@ func StagedStat() string {
 }
 
 // DiffBetween returns the unified diff between two refs (branches, tags, SHAs).
-// Used by --from / --to and prgen review.
 func DiffBetween(from, to string) string {
 	return MustRun("diff", from+"..."+to)
+}
+
+// FilteredDiffBetween returns the unified diff between two refs excluding given patterns.
+func FilteredDiffBetween(from, to string, ignorePatterns []string) string {
+	args := []string{"diff", from + "..." + to, "--"}
+	for _, p := range ignorePatterns {
+		args = append(args, ":(exclude)"+p)
+	}
+	return MustRun(args...)
 }
 
 // StatBetween returns the --stat between two refs.

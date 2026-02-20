@@ -10,8 +10,8 @@
 
 ```bash
 # 1. Clone
-git clone https://github.com/ksh/prgen
-cd prgen
+git clone https://github.com/alann-estrada-KSH/ai-pr-generator/
+cd ai-pr-generator
 
 # 2. Instalar (agrega prgen a tu PATH automáticamente)
 bash scripts/install.sh                                             # macOS / Linux
@@ -124,10 +124,13 @@ prgen branch "corregir error 500 en endpoint de pagos"
 
 ## Configuración
 
-**Prioridad (de menor a mayor):**
-```
-Defaults → config.yaml → ~/.prgen/config.yaml → Env vars → CLI flags
-```
+**Config is loaded in this priority order (highest wins):**
+
+1. `config.yaml` in current dir or binary dir
+2. `~/.prgen/config.yaml` ← your personal overrides
+3. `.env` file (current dir, binary dir, or ~/.prgen/)
+4. Environment variables
+5. CLI flags
 
 ```yaml
 provider: ollama          # ollama | openai | groq | openrouter

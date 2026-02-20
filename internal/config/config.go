@@ -106,6 +106,23 @@ func Load() (*Config, error) {
 		// No config file found — use defaults + env
 	}
 
+	// ── .env support ──────────────────────────────────────────────────────
+	// Load .env into OS environment so bindEnv picks them up
+	vDot := viper.New()
+	vDot.SetConfigName(".env")
+	vDot.SetConfigType("env")
+	vDot.AddConfigPath(".")
+	vDot.AddConfigPath(binaryDir())
+	vDot.AddConfigPath(filepath.Join(userHome(), ".prgen"))
+	if err := vDot.ReadInConfig(); err == nil {
+		for k, v := range vDot.AllSettings() {
+			envKey := strings.ToUpper(k)
+			if os.Getenv(envKey) == "" {
+				os.Setenv(envKey, fmt.Sprintf("%v", v))
+			}
+		}
+	}
+
 	// ── Environment variables ─────────────────────────────────────────────
 	v.SetEnvPrefix("PRGEN")
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
