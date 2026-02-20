@@ -1,0 +1,37 @@
+# prgen configuration
+# ─────────────────────────────────────────────────────────────
+# Override priority (highest wins):
+#   1. This file (config.yaml)
+#   2. ~/.prgen/config.yaml
+#   3. Environment variables (PRGEN_PROVIDER, PRGEN_API_KEY, etc.)
+#   4. CLI flags (--provider, --model, etc.)
+
+# ── LLM Provider ─────────────────────────────────────────────
+# Options: ollama | openai | groq | openrouter
+provider: ollama
+model: llama3.1
+
+# Ollama (local)
+ollama_url: http://localhost:11434
+
+# API key — for cloud providers (Groq, OpenAI, OpenRouter)
+# Recommended: use env var instead of storing here
+# api_key: ""
+
+# API base URL — auto-set for known providers, override for custom
+# api_base_url: ""
+
+# ── Prompts ───────────────────────────────────────────────────
+prompts:
+  # Base prompt (versioned with the tool — edit carefully)
+  base: prompts/base.md
+  # Optional extra prompt, merged after base (not committed to git)
+  extra: ~/.prgen/extra_prompt.md
+
+# ── Output ────────────────────────────────────────────────────
+output:
+  save_path: ~/KSH/Projects
+  copy_to_clipboard: true
+
+# ── Debug ─────────────────────────────────────────────────────
+debug: false
