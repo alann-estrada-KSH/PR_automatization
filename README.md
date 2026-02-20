@@ -1,6 +1,6 @@
 # prgen — AI-powered PR Generator
 
-> Generate detailed Pull Request descriptions from git commits using your preferred LLM.
+> Genera Pull Requests, revisa código y crea commits semánticos desde tu terminal usando IA.
 
 **Providers:** Ollama (local) · Groq · OpenAI · OpenRouter
 
@@ -13,62 +13,158 @@
 git clone https://github.com/ksh/prgen
 cd prgen
 
-# 2. Install (adds prgen to your PATH automatically)
-bash scripts/install.sh          # macOS / Linux
-# PowerShell -ExecutionPolicy Bypass -File scripts\install.ps1  # Windows
+# 2. Instalar (agrega prgen a tu PATH automáticamente)
+bash scripts/install.sh                                             # macOS / Linux
+PowerShell -ExecutionPolicy Bypass -File scripts\install.ps1       # Windows
 
-# 3. Use (from any git repo)
-prgen                            # generates PR from last commit
+# 3. Usar (desde cualquier repo git)
+prgen                            # genera PR del último commit
 ```
 
 ---
 
-## Usage
+## Comandos
 
+| Comando | Descripción |
+|---|---|
+| `prgen generate` | Genera descripción de PR desde commits recientes |
+| `prgen commit` | Genera mensaje de commit Conventional Commits desde staged changes |
+| `prgen review` | Revisión de código por IA (bugs, seguridad, refactor) |
+| `prgen branch <desc>` | Sugiere nombres de rama desde una descripción |
+| `prgen version` | Muestra versión instalada |
+| `prgen update` | Actualiza desde git (con confirmación) |
+| `prgen config` | Muestra configuración activa |
+
+---
+
+## `prgen generate`
+
+```bash
+prgen                                            # PR del último commit
+prgen generate --commits 3                       # últimos 3 commits
+prgen generate --from develop                    # todo lo que difiere de develop
+prgen generate --from develop --to feature/auth  # rango específico
+prgen generate --tasks "TK-123,TK-456"           # incluye task IDs en el PR
+prgen generate --notes "cierra el sprint 14"     # instrucciones adicionales
+prgen generate --provider groq --model llama-3.1-70b-versatile
 ```
-prgen [generate] [flags]
 
-Flags:
-  -c, --commits int             Number of commits to analyze (default 1)
-  -n, --notes string            Additional instructions (inline)
-  -f, --notes-file string       Read additional instructions from file
-  -i, --interactive-notes       Enter multiline notes (end with 'END')
-  -p, --provider string         LLM provider (ollama|openai|groq|openrouter|mock)
-  -m, --model string            Model override
-      --no-clipboard            Do not copy output to clipboard
-      --dry-run                 Skip LLM call (for testing)
-      --dump-prompt             Print prompt and exit
-      --debug                   Enable debug output
+**Flags:**
 
-Commands:
-  prgen generate                Main generate flow (default)
-  prgen version                 Show version + build date
-  prgen update                  Pull latest from git (safe, with confirmation)
-  prgen config                  Show active configuration
+| Flag | Corto | Descripción |
+|---|---|---|
+| `--commits` | `-c` | Commits a analizar (default: 1) |
+| `--from` | | Rama/ref base para comparar |
+| `--to` | | Rama/ref destino (default: HEAD) |
+| `--tasks` | `-t` | Task IDs separados por coma |
+| `--notes` | `-n` | Instrucciones adicionales inline |
+| `--notes-file` | `-f` | Instrucciones desde archivo |
+| `--interactive-notes` | `-i` | Notas multilinea (termina con `END`) |
+| `--provider` | `-p` | Override del proveedor LLM |
+| `--model` | `-m` | Override del modelo |
+| `--no-clipboard` | | No copiar al portapapeles |
+| `--dry-run` | | Salta la llamada al LLM |
+| `--dump-prompt` | | Imprime el prompt y sale |
+| `--debug` | | Modo debug |
+
+---
+
+## `prgen commit`
+
+Analiza los cambios staged (`git diff --cached`) y genera un mensaje de commit siguiendo el **Método CDE** (Document as you code) + Conventional Commits.
+
+```bash
+git add .
+prgen commit           # muestra la sugerencia
+prgen commit --apply   # genera y ejecuta el git commit directamente
+```
+
+**Ejemplo de salida:**
+```
+feat(auth): implementar rotación de refresh tokens en TokenService
+
+Los tokens de acceso estáticos representaban una ventana de exposición
+ilimitada si eran comprometidos. Con la rotación, cada uso de un refresh
+token invalida el anterior, limitando el daño a una sola sesión.
 ```
 
 ---
 
-## Configuration
+## `prgen review`
 
-Config is loaded in this priority order (highest wins):
+Revisión de código por IA. Detecta bugs, problemas de seguridad, falta de error handling y sugiere refactors.
 
-1. `config.yaml` in current dir or binary dir
-2. `~/.prgen/config.yaml` ← your personal overrides
-3. Environment variables
-4. CLI flags
+```bash
+prgen review                      # revisa el último commit
+prgen review --commits 3          # últimos 3 commits
+prgen review --from develop       # todo lo diferente de develop
+```
 
-### Key environment variables
+**Reporte incluye:**
+- 🔴 Crítico | 🟡 Advertencia | 🟢 Sugerencia
+- Bugs y casos no manejados
+- Seguridad (SQL injection, secrets, auth)
+- Error handling faltante
+- Sugerencias de refactor
 
-| Variable | Description |
+---
+
+## `prgen branch`
+
+Sugiere nombres de rama desde una descripción en lenguaje natural.
+
+```bash
+prgen branch "corregir error 500 en endpoint de pagos"
+# → fix/error-500-endpoint-pagos       → git checkout -b fix/...
+# → fix/pagos-endpoint-500             → git checkout -b fix/...
+# → hotfix/pagos-500-endpoint          → git checkout -b hotfix/...
+```
+
+---
+
+## Configuración
+
+**Prioridad (de menor a mayor):**
+```
+Defaults → config.yaml → ~/.prgen/config.yaml → Env vars → CLI flags
+```
+
+```yaml
+provider: ollama          # ollama | openai | groq | openrouter
+model: llama3.1
+ollama_url: http://localhost:11434
+api_key: ""
+
+prompts:
+  base:   prompts/base.md
+  commit: prompts/commit.md
+  review: prompts/review.md
+  extra:  ~/.prgen/extra_prompt.md
+
+output:
+  save_path: ~/KSH/Projects
+  copy_to_clipboard: true
+
+diff:
+  max_chars: 20000          # límite de chars del diff enviado al LLM
+  ignore:                   # archivos excluidos del diff
+    - "package-lock.json"
+    - "composer.lock"
+    - "go.sum"
+    - "*.min.js"
+    - "*.min.css"
+```
+
+**Variables de entorno:**
+
+| Variable | Descripción |
 |---|---|
 | `PRGEN_PROVIDER` | `ollama` \| `openai` \| `groq` \| `openrouter` |
-| `PRGEN_MODEL` | Model name (e.g. `llama3.1`, `llama-3.1-70b-versatile`) |
-| `PRGEN_API_KEY` | API key (also accepts `GROQ_API_KEY`, `OPENAI_API_KEY`) |
-| `PRGEN_API_BASE_URL` | Custom base URL (auto-set for groq/openai/openrouter) |
-| `PRGEN_OLLAMA_URL` | Ollama URL (default: `http://localhost:11434`) |
+| `PRGEN_MODEL` | Nombre del modelo |
+| `PRGEN_API_KEY` | API key (también acepta `GROQ_API_KEY`, `OPENAI_API_KEY`) |
+| `PRGEN_OLLAMA_URL` | URL de Ollama (default: `http://localhost:11434`) |
 
-### Use Groq (recommended for speed)
+### Usar Groq (recomendado para velocidad)
 
 ```bash
 export PRGEN_PROVIDER=groq
@@ -77,38 +173,20 @@ export PRGEN_MODEL=llama-3.1-70b-versatile
 prgen
 ```
 
-### Use Ollama (local, no API key)
+---
 
-```bash
-ollama pull llama3.1
-prgen  # provider defaults to ollama
-```
+## Personalizar prompts
+
+| Archivo | Propósito |
+|---|---|
+| `prompts/base.md` | Estructura del PR — usa `{{.Branch}}`, `{{.Stats}}`, `{{.Logs}}`, `{{.Diff}}` |
+| `prompts/commit.md` | Guía para mensajes de commit CDE |
+| `prompts/review.md` | Estructura del reporte de revisión |
+| `~/.prgen/extra_prompt.md` | Instrucciones de tu equipo (no versionado) |
 
 ---
 
-## Customizing the Prompt
-
-The prompt system has two layers:
-
-1. **`prompts/base.md`** — base prompt, versioned with the tool. Supports `{{.Branch}}`, `{{.Stats}}`, `{{.Logs}}`, `{{.ProjectType}}` placeholders.
-2. **`~/.prgen/extra_prompt.md`** — your personal/team additions. Not tracked by git. Injected after the base prompt.
-
----
-
-## Update
-
-```bash
-prgen update            # fetches, shows new commits, confirms before pulling
-```
-
-After pulling, reinstall:
-```bash
-bash scripts/install.sh
-```
-
----
-
-## Building manually
+## Build manual
 
 ```bash
 VERSION=$(cat VERSION)

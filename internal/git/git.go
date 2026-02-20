@@ -9,8 +9,6 @@ import (
 
 // gitCmd builds an exec.Cmd for git with UTF-8 forced on every platform.
 func gitCmd(args ...string) *exec.Cmd {
-	// Prepend config flags that force UTF-8 output from git regardless of
-	// the system locale (critical on Windows where default codepage is not UTF-8).
 	fullArgs := append([]string{
 		"-c", "core.quotepath=false",
 		"-c", "i18n.logOutputEncoding=UTF-8",
@@ -18,7 +16,6 @@ func gitCmd(args ...string) *exec.Cmd {
 	}, args...)
 
 	cmd := exec.Command("git", fullArgs...)
-	// Pass through the current environment but override relevant locale vars
 	cmd.Env = append(os.Environ(),
 		"LANG=en_US.UTF-8",
 		"LC_ALL=en_US.UTF-8",
@@ -54,6 +51,51 @@ func DiffStat(n int) string {
 	return MustRun("diff", "--stat", ref, "HEAD")
 }
 
+// Diff returns the full unified diff for the last n commits.
+func Diff(n int) string {
+	ref := fmt.Sprintf("HEAD~%d", n)
+	return MustRun("diff", ref, "HEAD")
+}
+
+// FilteredDiff returns the diff for the last n commits, excluding files that
+// match any of the given patterns (uses git pathspec :(exclude)).
+// If ignorePatterns is empty, falls back to plain Diff.
+func FilteredDiff(n int, ignorePatterns []string) string {
+	ref := fmt.Sprintf("HEAD~%d", n)
+	args := []string{"diff", ref, "HEAD", "--"}
+	for _, p := range ignorePatterns {
+		args = append(args, ":(exclude)"+p)
+	}
+	return MustRun(args...)
+}
+
+// StagedDiff returns the diff of currently staged (cached) changes.
+// This is what prgen commit uses to analyze what's about to be committed.
+func StagedDiff() string {
+	return MustRun("diff", "--cached")
+}
+
+// StagedStat returns the --stat of currently staged changes.
+func StagedStat() string {
+	return MustRun("diff", "--cached", "--stat")
+}
+
+// DiffBetween returns the unified diff between two refs (branches, tags, SHAs).
+// Used by --from / --to and prgen review.
+func DiffBetween(from, to string) string {
+	return MustRun("diff", from+"..."+to)
+}
+
+// StatBetween returns the --stat between two refs.
+func StatBetween(from, to string) string {
+	return MustRun("diff", "--stat", from+"..."+to)
+}
+
+// LogBetween returns the commit log between two refs.
+func LogBetween(from, to string) string {
+	return MustRun("log", from+".."+to, "--pretty=format:Commit: %s\nDesc: %b\n")
+}
+
 // Branch returns the current branch name.
 func Branch() string {
 	return MustRun("rev-parse", "--abbrev-ref", "HEAD")
@@ -68,6 +110,12 @@ func HeadHash() string {
 func IsClean() bool {
 	out := MustRun("status", "--porcelain")
 	return out == ""
+}
+
+// HasStagedChanges returns true if there are staged changes to commit.
+func HasStagedChanges() bool {
+	out := MustRun("diff", "--cached", "--name-only")
+	return out != ""
 }
 
 // FetchAndDiff fetches origin and returns commits ahead of local HEAD.

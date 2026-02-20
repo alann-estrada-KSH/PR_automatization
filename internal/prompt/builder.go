@@ -14,6 +14,7 @@ type Context struct {
 	Branch            string
 	Logs              string
 	Stats             string
+	Diff              string // actual git diff output (truncated to avoid token overflow)
 	ExtraInstructions string // from --notes, --notes-file, or extra_prompt.md
 }
 
@@ -56,6 +57,7 @@ func (b *Builder) loadBase(ctx Context) (string, error) {
 	tmpl = strings.ReplaceAll(tmpl, "{{.Branch}}", ctx.Branch)
 	tmpl = strings.ReplaceAll(tmpl, "{{.Logs}}", ctx.Logs)
 	tmpl = strings.ReplaceAll(tmpl, "{{.Stats}}", ctx.Stats)
+	tmpl = strings.ReplaceAll(tmpl, "{{.Diff}}", truncateDiff(ctx.Diff, 6000))
 	return tmpl, nil
 }
 
@@ -81,27 +83,43 @@ DATOS:
 %s
 - Mensajes de Commit:
 %s
+- Diff del código:
+%s
 
 INSTRUCCIONES DE FORMATO (ESTRICTO):
 1. NO escribas saludos ni introducciones.
 2. NO uses subrayados ni líneas de separación (ej: "---") debajo de los títulos.
 3. NO generes checkboxes, ni listas de cambios, ni checklists. Solo texto narrativo.
 4. Usa listas Markdown estándar con guiones ("- Item").
+5. Si el mensaje de commit es vago ("fix", "update", "changes", etc.),
+   IGNORA el mensaje y analiza el diff para determinar qué cambió realmente.
 
 ESTRUCTURA Y CONTENIDO REQUERIDO:
 
-## Resumen del cambio
-(Escribe al menos 5 párrafos detallados. Menciona nombres de archivos técnicos importantes.
-Explica la arquitectura y relaciones de datos si aplica).
+## 📌 Resumen del cambio
+(Escribe al menos 5 párrafos detallados. Menciona nombres de archivos, funciones y métodos modificados.
+Básate en el diff — no en el mensaje de commit — para explicar qué cambió realmente.)
 
-## ¿Qué problema soluciona?
-(Enfócate en el valor técnico y de negocio).
+## 🔍 ¿Qué problema soluciona?
+(Enfócate en el valor técnico y de negocio. Infiere el propósito real del cambio desde el diff).
 
-## ¿Cómo probarlo?
+## 🚀 ¿Cómo probarlo?
 1. Cambia a la rama %s.
 (Lista los pasos numerados. Si incluyes código usa bloques markdown. Si hay migraciones pon el comando exacto).
 
-## Consideraciones adicionales
+## ⚠️ Consideraciones adicionales
 (Menciona comandos extra si son necesarios: npm run build, composer install, actualizaciones de BD, permisos o riesgos de seguridad. Si no hay, pon "Ninguna").`,
-		ctx.ProjectType, ctx.Branch, ctx.Stats, ctx.Logs, ctx.Branch)
+		ctx.ProjectType, ctx.Branch, ctx.Stats, ctx.Logs,
+		truncateDiff(ctx.Diff, 6000), ctx.Branch)
+}
+
+// truncateDiff caps the diff at maxChars to avoid token overflow.
+// It keeps the beginning (most relevant) and signals the truncation.
+func truncateDiff(diff string, maxChars int) string {
+	if len(diff) <= maxChars {
+		return diff
+	}
+	// Keep the first portion and append a notice
+	return diff[:maxChars] + "\n\n[... diff truncado por longitud — se muestran los primeros " +
+		fmt.Sprintf("%d", maxChars) + " caracteres ...]"
 }

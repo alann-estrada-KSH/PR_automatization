@@ -28,18 +28,35 @@ type Config struct {
 	// Output
 	Output OutputConfig `mapstructure:"output"`
 
+	// Diff collection settings
+	Diff DiffConfig `mapstructure:"diff"`
+
 	// Debug / dry-run
-	Debug  bool `mapstructure:"debug"`
+	Debug bool `mapstructure:"debug"`
 }
 
 type PromptConfig struct {
-	Base  string `mapstructure:"base"`
-	Extra string `mapstructure:"extra"`
+	Base   string `mapstructure:"base"`
+	Extra  string `mapstructure:"extra"`
+	Commit string `mapstructure:"commit"`
+	Review string `mapstructure:"review"`
 }
 
 type OutputConfig struct {
 	SavePath        string `mapstructure:"save_path"`
 	CopyToClipboard bool   `mapstructure:"copy_to_clipboard"`
+}
+
+// DiffConfig controls how git diffs are collected and filtered.
+type DiffConfig struct {
+	// MaxChars is the maximum number of characters to include from the diff.
+	// Models with large context windows (Groq llama-3.1-70b = 128k tokens)
+	// can handle much more. Default: 20000.
+	MaxChars int `mapstructure:"max_chars"`
+
+	// Ignore is a list of file patterns to exclude from the diff.
+	// Uses git pathspec :(exclude) syntax under the hood.
+	Ignore []string `mapstructure:"ignore"`
 }
 
 // Load reads config from (in order of priority, highest last wins):
@@ -59,8 +76,19 @@ func Load() (*Config, error) {
 	v.SetDefault("api_base_url", "")
 	v.SetDefault("prompts.base", "prompts/base.md")
 	v.SetDefault("prompts.extra", filepath.Join(userHome(), ".prgen", "extra_prompt.md"))
+	v.SetDefault("prompts.commit", "prompts/commit.md")
+	v.SetDefault("prompts.review", "prompts/review.md")
 	v.SetDefault("output.save_path", filepath.Join(userHome(), "KSH", "Projects"))
 	v.SetDefault("output.copy_to_clipboard", true)
+	v.SetDefault("diff.max_chars", 20000)
+	v.SetDefault("diff.ignore", []string{
+		"package-lock.json",
+		"composer.lock",
+		"yarn.lock",
+		"go.sum",
+		"*.min.js",
+		"*.min.css",
+	})
 	v.SetDefault("debug", false)
 
 	// ── Config files ──────────────────────────────────────────────────────
@@ -98,7 +126,14 @@ func Load() (*Config, error) {
 	// Post-process: expand ~ in paths
 	cfg.Prompts.Base = expandPath(cfg.Prompts.Base)
 	cfg.Prompts.Extra = expandPath(cfg.Prompts.Extra)
+	cfg.Prompts.Commit = expandPath(cfg.Prompts.Commit)
+	cfg.Prompts.Review = expandPath(cfg.Prompts.Review)
 	cfg.Output.SavePath = expandPath(cfg.Output.SavePath)
+
+	// Ensure max_chars has a sane minimum
+	if cfg.Diff.MaxChars <= 0 {
+		cfg.Diff.MaxChars = 20000
+	}
 
 	return cfg, nil
 }
