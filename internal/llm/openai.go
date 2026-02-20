@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ksh/prgen/internal/config"
+	"github.com/alann-estrada-KSH/ai-pr-generator/internal/config"
 )
 
 // openAIClient is compatible with OpenAI, Groq, OpenRouter, and any

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ksh/prgen/internal/config"
+	"github.com/alann-estrada-KSH/ai-pr-generator/internal/config"
 )
 
 // Client is the abstraction for any LLM backend.
