@@ -1,130 +1,210 @@
-# 🤖 AI Pull Request Generator
+# prgen — AI-powered PR Generator
 
-Generador automático de Pull Requests (PR) utilizando Inteligencia Artificial (**Llama 3.1**) y análisis de Git.
+> Genera Pull Requests, revisa código y crea commits semánticos desde tu terminal usando IA.
 
-Esta herramienta analiza tus commits recientes y los archivos modificados para redactar una descripción técnica detallada, profesional y estructurada ("Nivel Arquitecto"), eliminando el trabajo manual de documentar cambios.
+**Providers:** Ollama (local) · Groq · OpenAI · OpenRouter
 
-## ✨ Características Principales
+---
 
-  * **🧠 IA Avanzada (Local):** Utiliza `llama3.1` vía Ollama para escribir resúmenes narrativos y explicaciones de pruebas.
-  * **🕵️‍♂️ Detección Automática de Tecnología:** Identifica si el proyecto es **Laravel, Python, Dolibarr** o Genérico y adapta el contenido.
-  * **✅ Checklists Estrictos:** Genera listas de tareas técnicas y de merge basadas en la realidad del código (no alucinaciones de la IA).
-  * **📂 Organización Automática:** Guarda los PRs generados en una carpeta organizada por Proyecto y Fecha.
-  * **📋 Portapapeles:** Copia automáticamente el contenido generado al portapapeles listo para pegar en GitHub/GitLab.
-  * **🧹 Formato Limpio:** Incluye limpieza automática de Markdown para asegurar títulos y listas perfectas.
+## Quick Start
 
------
-
-## 🚀 Requisitos Previos
-
-Antes de usar el script, necesitas tener instalado lo siguiente:
-
-1.  **Python 3.x** instalado.
-2.  **Git** inicializado en tu proyecto.
-3.  **Ollama** (para correr el modelo de IA localmente).
-
-### 1\. Instalar Ollama y el Modelo
-
-Descarga Ollama desde [ollama.com](https://ollama.com) e instálalo. Luego, descarga el modelo Llama 3.1 (recomendado para este script):
+Se recomienda tener instalado go previamente para evitar problemas, lo puedes descargar desde la pagina oficial [GoLang](https://go.dev/dl/)
 
 ```bash
-ollama pull llama3.1
+# 1. Clone
+git clone https://github.com/alann-estrada-KSH/ai-pr-generator/
+cd ai-pr-generator
+
+# 2. Instalar (agrega prgen a tu PATH automáticamente)
+bash scripts/install.sh                                             # macOS / Linux
+PowerShell -ExecutionPolicy Bypass -File scripts\install.ps1       # Windows
+
+# 3. Usar (desde cualquier repo git)
+prgen                            # genera PR del último commit
 ```
 
-### 2\. Instalar Librerías de Python
+---
 
-Este script requiere un par de librerías para la barra de progreso y el manejo del portapapeles:
+## Comandos
+
+| Comando                 | Descripción                                                       |
+| ----------------------- | ------------------------------------------------------------------ |
+| `prgen generate`      | Genera descripción de PR desde commits recientes                  |
+| `prgen commit`        | Genera mensaje de commit Conventional Commits desde staged changes |
+| `prgen review`        | Revisión de código por IA (bugs, seguridad, refactor)            |
+| `prgen branch <desc>` | Sugiere nombres de rama desde una descripción                     |
+| `prgen version`       | Muestra versión instalada                                         |
+| `prgen update`        | Actualiza desde git (con confirmación)                            |
+| `prgen config`        | Muestra configuración activa                                      |
+
+---
+
+## `prgen generate`
 
 ```bash
-pip install tqdm pyperclip
+prgen                                            # PR del último commit
+prgen generate --commits 3                       # últimos 3 commits
+prgen generate --from develop                    # todo lo que difiere de develop
+prgen generate --from develop --to feature/auth  # rango específico
+prgen generate --tasks "TK-123,TK-456"           # incluye task IDs en el PR
+prgen generate --notes "cierra el sprint 14"     # instrucciones adicionales
+prgen generate --provider groq --model llama-3.1-70b-versatile
 ```
 
------
+**Flags:**
 
-## 🛠️ Instalación y Configuración
+| Flag                    | Corto  | Descripción                           |
+| ----------------------- | ------ | -------------------------------------- |
+| `--commits`           | `-c` | Commits a analizar (default: 1)        |
+| `--from`              |        | Rama/ref base para comparar            |
+| `--to`                |        | Rama/ref destino (default: HEAD)       |
+| `--tasks`             | `-t` | Task IDs separados por coma            |
+| `--notes`             | `-n` | Instrucciones adicionales inline       |
+| `--notes-file`        | `-f` | Instrucciones desde archivo            |
+| `--interactive-notes` | `-i` | Notas multilinea (termina con `END`) |
+| `--provider`          | `-p` | Override del proveedor LLM             |
+| `--model`             | `-m` | Override del modelo                    |
+| `--no-clipboard`      |        | No copiar al portapapeles              |
+| `--dry-run`           |        | Salta la llamada al LLM                |
+| `--dump-prompt`       |        | Imprime el prompt y sale               |
+| `--debug`             |        | Modo debug                             |
 
-1.  **Clona este repositorio** en una carpeta de herramientas (ej. `~/Tools/ai-pr-generator`):
+---
 
-    ```bash
-    git clone https://github.com/alann-estrada-KSH/ai-pr-generator.git
-    cd ai-pr-generator
-    ```
+## `prgen commit`
 
-2.  **Configura la ruta de salida (Opcional):**
-    Por defecto, los PRs se guardan en `~/KSH/Projects`. Puedes cambiar esto editando la línea en el script:
-
-    ```python
-    # Busca esta línea en el script y cámbiala a tu gusto
-    projects_folder = os.path.join(os.path.expanduser("~"), 'MisDocumentos', 'PRs')
-    ```
-
------
-
-## 💻 Uso
-
-Navega desde tu terminal a la carpeta de **cualquier proyecto** git y ejecuta el script.
-
-### Sintaxis Básica
+Analiza los cambios staged (`git diff --cached`) y genera un mensaje de commit siguiendo el **Método CDE** (Document as you code) + Conventional Commits.
 
 ```bash
-python /ruta/al/script/generate_pr.py [numero_de_commits]
+git add .
+prgen commit           # muestra la sugerencia
+prgen commit --apply   # genera y ejecuta el git commit directamente
 ```
 
-  * **`[numero_de_commits]`**: (Opcional) Cuántos commits hacia atrás analizar. Por defecto es `1`.
+**Ejemplo de salida:**
 
-### Ejemplo Práctico
+```
+feat(auth): implementar rotación de refresh tokens en TokenService
 
-Estás trabajando en un proyecto Laravel y quieres generar un PR de tus últimos 5 commits:
+Los tokens de acceso estáticos representaban una ventana de exposición
+ilimitada si eran comprometidos. Con la rotación, cada uso de un refresh
+token invalida el anterior, limitando el daño a una sola sesión.
+```
+
+---
+
+## `prgen review`
+
+Revisión de código por IA. Detecta bugs, problemas de seguridad, falta de error handling y sugiere refactors.
 
 ```bash
-# Estando en la carpeta de tu proyecto Laravel
-python ~/Tools/ai-pr-generator/generate_pr.py 5
+prgen review                      # revisa el último commit
+prgen review --commits 3          # últimos 3 commits
+prgen review --from develop       # todo lo diferente de develop
 ```
 
-1.  El script te preguntará si quieres agregar **Referencias de Tareas** (Jira, Trello, etc.).
-2.  Analizará los archivos y commits.
-3.  La IA redactará el contenido.
-4.  **¡Listo\!** El PR se guardará en un archivo `.md` y se copiará a tu portapapeles.
+**Reporte incluye:**
 
------
+- 🔴 Crítico | 🟡 Advertencia | 🟢 Sugerencia
+- Bugs y casos no manejados
+- Seguridad (SQL injection, secrets, auth)
+- Error handling faltante
+- Sugerencias de refactor
 
-## ⚡ Tip Pro: Crear un Alias
+---
 
-Para no escribir la ruta completa del script cada vez, crea un alias en tu terminal.
+## `prgen branch`
 
-### En Mac/Linux (Zsh/Bash)
-
-Añade esto a tu archivo `.zshrc` o `.bashrc`:
+Sugiere nombres de rama desde una descripción en lenguaje natural.
 
 ```bash
-alias gpr="python3 ~/ruta/donde/guardaste/generate_pr.py"
+prgen branch "corregir error 500 en endpoint de pagos"
+# → fix/error-500-endpoint-pagos       → git checkout -b fix/...
+# → fix/pagos-endpoint-500             → git checkout -b fix/...
+# → hotfix/pagos-500-endpoint          → git checkout -b hotfix/...
 ```
 
-Recarga la configuración (`source ~/.zshrc`) y ahora solo tendrás que escribir:
+---
+
+## Configuración
+
+**Config is loaded in this priority order (highest wins):**
+
+1. `config.yaml` in current dir or binary dir
+2. `~/.prgen/config.yaml` ← your personal overrides
+3. `.env` file (current dir, binary dir, or ~/.prgen/)
+4. Environment variables
+5. CLI flags
+
+```yaml
+provider: ollama          # ollama | openai | groq | openrouter
+model: llama3.1
+ollama_url: http://localhost:11434
+api_key: ""
+
+prompts:
+  base:   prompts/base.md
+  commit: prompts/commit.md
+  review: prompts/review.md
+  extra:  ~/.prgen/extra_prompt.md
+
+output:
+  save_path: ~/KSH/Projects
+  copy_to_clipboard: true
+
+diff:
+  max_chars: 20000          # límite de chars del diff enviado al LLM
+  ignore:                   # archivos excluidos del diff
+    - "package-lock.json"
+    - "composer.lock"
+    - "go.sum"
+    - "*.min.js"
+    - "*.min.css"
+```
+
+**Variables de entorno:**
+
+| Variable             | Descripción                                                   |
+| -------------------- | -------------------------------------------------------------- |
+| `PRGEN_PROVIDER`   | `ollama` \| `openai` \| `groq` \| `openrouter`         |
+| `PRGEN_MODEL`      | Nombre del modelo                                              |
+| `PRGEN_API_KEY`    | API key (también acepta `GROQ_API_KEY`, `OPENAI_API_KEY`) |
+| `PRGEN_OLLAMA_URL` | URL de Ollama (default:`http://localhost:11434`)             |
+
+### Usar Groq (recomendado para velocidad)
 
 ```bash
-gpr 3
+export PRGEN_PROVIDER=groq
+export GROQ_API_KEY=gsk_xxxx
+export PRGEN_MODEL=llama-3.1-70b-versatile
+prgen
 ```
 
-### En Windows (PowerShell)
+---
 
-Abre tu perfil de PowerShell (`notepad $PROFILE`) y añade:
+## Personalizar prompts
 
-```powershell
-function gpr { python "C:\Ruta\Al\Script\generate_pr.py" $args }
+| Archivo                      | Propósito                                                                             |
+| ---------------------------- | -------------------------------------------------------------------------------------- |
+| `prompts/base.md`          | Estructura del PR — usa `{{.Branch}}`, `{{.Stats}}`, `{{.Logs}}`, `{{.Diff}}` |
+| `prompts/commit.md`        | Guía para mensajes de commit CDE                                                      |
+| `prompts/review.md`        | Estructura del reporte de revisión                                                    |
+| `~/.prgen/extra_prompt.md` | Instrucciones de tu equipo (no versionado)                                             |
+
+---
+
+## Build manual
+
+```bash
+VERSION=$(cat VERSION)
+go build \
+  -ldflags "-s -w -X github.com/ksh/prgen/internal/version.Version=$VERSION" \
+  -o prgen \
+  ./cmd/prgen
 ```
 
------
+---
 
-## 🎨 Personalización
+## License
 
-El script es modular. Puedes editar fácilmente las plantillas en el código:
-
-  * **`TEMPLATE_LARAVEL`, `TEMPLATE_PYTHON`, etc.:** Modifica los checklists técnicos automáticos.
-  * **`MERGE_TEMPLATES`:** Modifica los requisitos finales antes de hacer merge (ej. requerir `php artisan test` o `pytest`).
-
------
-
-## 📝 Licencia
-
-Este proyecto es de uso libre. ¡Siéntete libre de forkearlo y mejorarlo\!
+MIT — KSH
