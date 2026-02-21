@@ -21,7 +21,7 @@ echo " 🔧 Building prgen v$VERSION..."
 # ── Build ─────────────────────────────────────────────────────────────────────
 cd "$REPO_ROOT"
 go build \
-  -ldflags "-s -w -X github.com/ksh/prgen/internal/version.Version=$VERSION -X github.com/ksh/prgen/internal/version.BuildDate=$BUILD_DATE" \
+  -ldflags "-s -w -X github.com/alann-estrada-KSH/ai-pr-generator/internal/version.Version=$VERSION -X github.com/alann-estrada-KSH/ai-pr-generator/internal/version.BuildDate=$BUILD_DATE" \
   -o "$BIN_NAME" \
   ./cmd/prgen
 
