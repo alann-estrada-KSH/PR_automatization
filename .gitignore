@@ -1,0 +1,18 @@
+# Binaries
+# prgen
+prgen.exe
+
+# Go build cache artifacts
+*.test
+*.out
+
+# Config with sensitive data (users keep their own copy)
+# The committed config.yaml is a safe template
+.env
+
+# OS/IDE artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
